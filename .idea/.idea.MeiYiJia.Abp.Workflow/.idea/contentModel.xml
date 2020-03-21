@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ContentModelStore">
+    <e p="$PROJECT_DIR$" t="IncludeFlat">
+      <e p="MeiYiJia.Abp.Workflow.sln" t="IncludeFlat" />
+      <e p="packages" t="ExcludeRecursive" />
+      <e p="sample" t="Include">
+        <e p="Sample.Abp.Workflow" t="IncludeRecursive">
+          <e p="AppHostedService.cs" t="Include" />
+          <e p="AppModule.cs" t="Include" />
+          <e p="bin" t="ExcludeRecursive" />
+          <e p="obj" t="ExcludeRecursive">
+            <e p="Debug" t="Include">
+              <e p="netcoreapp3.1" t="Include">
+                <e p="Sample.Abp.Workflow.AssemblyInfo.cs" t="Include" />
+              </e>
+            </e>
+          </e>
+          <e p="Program.cs" t="Include" />
+          <e p="Sample.Abp.Workflow.csproj" t="IncludeRecursive" />
+          <e p="Step" t="Include">
+            <e p="FirstStepAsync.cs" t="Include" />
+            <e p="SecondStepAsync.cs" t="Include" />
+            <e p="ThirdStepAsync.cs" t="Include" />
+          </e>
+        </e>
+      </e>
+      <e p="src" t="IncludeRecursive">
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="Exception" t="Include">
+          <e p="WorkflowNotRegisteredException.cs" t="Include" />
+          <e p="WorkflowStepNotRegisteredException.cs" t="Include" />
+        </e>
+        <e p="Interface" t="Include">
+          <e p="IPersistenceProvider.cs" t="Include" />
+          <e p="IStepBodyAsync.cs" t="Include" />
+          <e p="IStepExecutionContext.cs" t="Include" />
+          <e p="ITokenBucket.cs" t="Include" />
+          <e p="IWorkflowController.cs" t="Include" />
+          <e p="IWorkflowRegistry.cs" t="Include" />
+          <e p="IWorkHost.cs" t="Include" />
+        </e>
+        <e p="MeiYiJia.Abp.Workflow.csproj" t="IncludeRecursive" />
+        <e p="Model" t="Include">
+          <e p="ExecutionResult.cs" t="Include" />
+          <e p="StepExecutionContext.cs" t="Include" />
+          <e p="WorkflowDefinition.cs" t="Include" />
+          <e p="WorkFlowExecuteInfo.cs" t="Include" />
+          <e p="WorkflowInstance.cs" t="Include" />
+          <e p="WorkFlowStep.cs" t="Include" />
+          <e p="WorkFlowStepExecuteInfo.cs" t="Include" />
+          <e p="WrokFlowStatus.cs" t="Include" />
+        </e>
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="netcoreapp3.1" t="Include">
+              <e p="MeiYiJia.Abp.Workflow.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+        <e p="Service" t="Include">
+          <e p="InMemoryPersistenceProvider.cs" t="Include" />
+          <e p="InMemoryTokenBucket.cs" t="Include" />
+          <e p="InMemoryWorkflowRegistry.cs" t="Include" />
+          <e p="WorkflowController.cs" t="Include" />
+          <e p="WorkflowExecutor.cs" t="Include" />
+        </e>
+        <e p="Step" t="Include">
+          <e p="BaseStepBodyAsync.cs" t="Include" />
+        </e>
+        <e p="Worker" t="Include">
+          <e p="WorkFlowHost.cs" t="Include" />
+        </e>
+        <e p="WorkflowModule.cs" t="Include" />
+        <e p="WorkflowOptions.cs" t="Include" />
+      </e>
+      <e p="test" t="Include" />
+    </e>
+    <e p="$USER_HOME$/Library/Caches/Rider2019.3/extResources" t="IncludeRecursive" />
+    <e p="$USER_HOME$/Library/Caches/Rider2019.3/resharper-host/local/Transient/ReSharperHost/v193/SolutionCaches/_MeiYiJia.Abp.Workflow.85121237.00" t="ExcludeRecursive" />
+    <e p="$APPLICATION_CONFIG_DIR$/consoles/db" t="IncludeRecursive" />
+    <e p="$APPLICATION_CONFIG_DIR$/extensions" t="IncludeRecursive" />
+  </component>
+</project>
