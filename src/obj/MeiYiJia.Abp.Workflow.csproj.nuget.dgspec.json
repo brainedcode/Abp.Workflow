@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/feynmanloo/Desktop/workspaces/github/Abp.Workflow/src/MeiYiJia.Abp.Workflow.csproj": {}
+    "/Users/feynmanloo/Desktop/workspaces/tobacco/MeiYiJia.Tobacco.SyncDataService/MeiYiJia.Abp.Workflow/src/MeiYiJia.Abp.Workflow.csproj": {}
   },
   "projects": {
-    "/Users/feynmanloo/Desktop/workspaces/github/Abp.Workflow/src/MeiYiJia.Abp.Workflow.csproj": {
+    "/Users/feynmanloo/Desktop/workspaces/tobacco/MeiYiJia.Tobacco.SyncDataService/MeiYiJia.Abp.Workflow/src/MeiYiJia.Abp.Workflow.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/feynmanloo/Desktop/workspaces/github/Abp.Workflow/src/MeiYiJia.Abp.Workflow.csproj",
+        "projectUniqueName": "/Users/feynmanloo/Desktop/workspaces/tobacco/MeiYiJia.Tobacco.SyncDataService/MeiYiJia.Abp.Workflow/src/MeiYiJia.Abp.Workflow.csproj",
         "projectName": "MeiYiJia.Abp.Workflow",
-        "projectPath": "/Users/feynmanloo/Desktop/workspaces/github/Abp.Workflow/src/MeiYiJia.Abp.Workflow.csproj",
+        "projectPath": "/Users/feynmanloo/Desktop/workspaces/tobacco/MeiYiJia.Tobacco.SyncDataService/MeiYiJia.Abp.Workflow/src/MeiYiJia.Abp.Workflow.csproj",
         "packagesPath": "/Users/feynmanloo/.nuget/packages/",
-        "outputPath": "/Users/feynmanloo/Desktop/workspaces/github/Abp.Workflow/src/obj/",
+        "outputPath": "/Users/feynmanloo/Desktop/workspaces/tobacco/MeiYiJia.Tobacco.SyncDataService/MeiYiJia.Abp.Workflow/src/obj/",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "/usr/local/share/dotnet/sdk/NuGetFallbackFolder"

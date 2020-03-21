@@ -7,14 +7,13 @@ using MeiYiJia.Abp.Workflow.Exception;
 using MeiYiJia.Abp.Workflow.Interface;
 using MeiYiJia.Abp.Workflow.Model;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nito.AsyncEx;
 
-namespace MeiYiJia.Abp.Workflow.Worker
+namespace MeiYiJia.Abp.Workflow
 {
-    public class WorkFlowHost: IWorkHost
+    public class WorkflowHost: IWorkflowHost
     {
         private readonly IWorkflowController _workflowController;
         private readonly ILogger _logger;
@@ -22,10 +21,10 @@ namespace MeiYiJia.Abp.Workflow.Worker
         private readonly IPersistenceProvider _persistenceProvider;
         private readonly WorkflowOptions _options;
         
-        public WorkFlowHost(
+        public WorkflowHost(
             IWorkflowController workflowController, 
             IPersistenceProvider persistenceProvider,
-            ILogger<WorkFlowHost> logger, 
+            ILogger<WorkflowHost> logger, 
             IServiceProvider serviceProvider,
             IOptions<WorkflowOptions> options)
         {

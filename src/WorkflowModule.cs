@@ -1,7 +1,5 @@
-﻿using System;
-using MeiYiJia.Abp.Workflow.Interface;
+﻿using MeiYiJia.Abp.Workflow.Interface;
 using MeiYiJia.Abp.Workflow.Service;
-using MeiYiJia.Abp.Workflow.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
@@ -23,7 +21,7 @@ namespace MeiYiJia.Abp.Workflow
             context.Services.AddSingleton<IPersistenceProvider, InMemoryPersistenceProvider>();
             context.Services.AddSingleton<IWorkflowRegistry, InMemoryWorkflowRegistry>();
             context.Services.AddSingleton<IWorkflowController, WorkflowController>();
-            context.Services.AddSingleton<IWorkHost, WorkFlowHost>();
+            context.Services.AddSingleton<IWorkflowHost, WorkflowHost>();
         }
     }
 }
