@@ -114,6 +114,10 @@ namespace MeiYiJia.Abp.Workflow.Service
                     _workFlowsQueue.Enqueue(wfiRunnable);
                     return true;
                 }
+                else
+                {
+                    await _tokenBucket.Increase();
+                }
             }
             return false;
         }
