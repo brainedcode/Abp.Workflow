@@ -53,8 +53,14 @@ namespace Sample.Abp.Workflow
                     }
                 }
             });
-            Parallel.For(0, 100, (i, state) => _workflowController.StartWorkflow("test", new {TaskId = i}));
+            Parallel.For(0, 5, async (i, state) => await _workflowController.StartWorkflowAsync("test", new {TaskId = i}));
             await _workHost.StartAsync(stoppingToken);
+        }
+
+        public override async Task StopAsync(CancellationToken cancellationToken)
+        {
+            await _workHost.StopAsync(cancellationToken);
+            await base.StopAsync(cancellationToken);
         }
     }
 }

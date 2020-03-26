@@ -18,7 +18,7 @@ namespace Sample.Abp.Workflow.Step
         public override async Task WorkAsync(IStepExecutionContext context, CancellationToken stoppingToken = default)
         {
             // throw new System.NotImplementedException();
-            await Task.Delay(new Random().Next(10000, 30000), stoppingToken);
+            await Task.Delay(new Random().Next(1000, 3000), stoppingToken);
             _logger.LogError($"{context.ContextData["TaskId"]}");
             // return Task.CompletedTask;
         }

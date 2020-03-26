@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using MeiYiJia.Abp.Workflow.Exception;
 using MeiYiJia.Abp.Workflow.Interface;
@@ -30,23 +31,23 @@ namespace MeiYiJia.Abp.Workflow.Service
             _tokenBucket = tokenBucket;
         }
         
-        public Task<string> StartWorkflow(string workflowId, Dictionary<string, object> data)
+        public Task<string> StartWorkflowAsync(string workflowId, Dictionary<string, object> data)
         {
-            return StartWorkflow(workflowId, null, data);
+            return StartWorkflowAsync(workflowId, null, data);
         }
 
-        public Task<string> StartWorkflow<TData>(string workflowId, TData data = default(TData)) where TData : class
+        public Task<string> StartWorkflowAsync<TData>(string workflowId, TData data = default(TData)) where TData : class
         {
-            return StartWorkflow(workflowId, null, data);
+            return StartWorkflowAsync(workflowId, null, data);
         }
 
-        public Task<string> StartWorkflow<TData>(string workflowId, int? version, TData data = default(TData)) where TData : class
+        public Task<string> StartWorkflowAsync<TData>(string workflowId, int? version, TData data = default(TData)) where TData : class
         {
             var dic = JsonConvert.DeserializeObject<Dictionary<string, object>>(JsonConvert.SerializeObject(data));
-            return StartWorkflow(workflowId, version, dic);
+            return StartWorkflowAsync(workflowId, version, dic);
         }
         
-        public async Task<string> StartWorkflow(string workflowId, int? version, Dictionary<string, object> data)
+        public async Task<string> StartWorkflowAsync(string workflowId, int? version, Dictionary<string, object> data)
         {
             var wfd = _registry.GetWorkflowDefinition(workflowId, version);
             if (wfd == null)
@@ -70,7 +71,6 @@ namespace MeiYiJia.Abp.Workflow.Service
             {
                 foreach (var dataKey in data.Keys)
                 {
-                    // wf.Data.TryAdd(dataKey, data[dataKey]);
                     if (wfi.Data.ContainsKey(dataKey))
                     {
                         wfi.Data[dataKey] = data[dataKey];
@@ -82,14 +82,7 @@ namespace MeiYiJia.Abp.Workflow.Service
                 }
             }
 
-            await ResumeWorkflow(wfi);
-
-            return default(string);
-        }
-
-        public async Task ResumeWorkflow(WorkflowInstance wfi)
-        {
-            if (await _tokenBucket.TryGetToken())
+            if (await _tokenBucket.TryGetToken(default))
             {
                 _workFlowsQueue.Enqueue(wfi);
             }
@@ -97,29 +90,37 @@ namespace MeiYiJia.Abp.Workflow.Service
             {
                 await _persistenceProvider.StorageWorkflowInstanceWaitForConsumeAsync(wfi);
             }
+
+            return wfi.Id;
         }
 
-        public Task RetryWorkflow(string workflowInstanceId)
+        public Task RetryWorkflowAsync(string workflowInstanceId)
         {
-            // var wfi = await _persistenceProvider.GetWorkflowInstanceAsync(workflowInstanceId);
-            // if (wfi == null)
-            // {
-            //     throw new System.Exception($"{workflowInstanceId} not found");
-            // }
-            // else if (_workFlowsQueue.Count <= _options.MaxRunningInstance)
-            // {
-            //     _workFlowsQueue.Enqueue(wfi);
-            // }
-            // else
-            // {
-            //     // 丢回数据库
-            // }
             return Task.CompletedTask;
         }
 
         public bool TryGetWorkflowInstance(out WorkflowInstance wfi)
         {
             return _workFlowsQueue.TryDequeue(out wfi);
+        }
+
+        public async Task<bool> TryResumeWorkflowInstanceAsync(CancellationToken stoppingToken)
+        {
+            if (await _tokenBucket.TryGetToken(stoppingToken))
+            {
+                var wfiRunnable = await _persistenceProvider.GetRunnableInstanceAsync(stoppingToken);
+                if (wfiRunnable != null)
+                {
+                    _workFlowsQueue.Enqueue(wfiRunnable);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public async Task CompleteWorkflowAsync(WorkflowInstance wfi)
+        {
+            await _tokenBucket.Increase();
         }
     }
 }

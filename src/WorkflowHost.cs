@@ -43,17 +43,20 @@ namespace MeiYiJia.Abp.Workflow
             var activeTasks = new ConcurrentDictionary<string, Task>();
             while (!stoppingToken.IsCancellationRequested)
             {
-                var wfiRunnable = await _persistenceProvider.GetRunnableInstanceAsync(stoppingToken);
-                if (wfiRunnable != null)
-                {
-                    await _workflowController.ResumeWorkflow(wfiRunnable);
-                }
-                
+                await _workflowController.TryResumeWorkflowInstanceAsync(stoppingToken);
                 if (_workflowController.TryGetWorkflowInstance(out var wfi))
                 {
                     var task = new Task(async (dynamic state) =>
                         {
-                            await ExecuteAsync(state.wfi, state.stoppingToken);
+                            try
+                            {
+                                await ExecuteAsync(state.wfi, state.stoppingToken);
+                            }
+                            finally
+                            {
+                                await _workflowController.CompleteWorkflowAsync(wfi);
+                                activeTasks.TryRemove(wfi.Id, out var t);
+                            }
                         }, 
                         new
                         {
@@ -67,7 +70,6 @@ namespace MeiYiJia.Abp.Workflow
                 else
                 {
                     await Task.Delay(2000, stoppingToken);
-                    Console.WriteLine(activeTasks.Count);
                 }
             }
             await Task.WhenAll(activeTasks.Values);
@@ -77,79 +79,79 @@ namespace MeiYiJia.Abp.Workflow
         private async Task ExecuteAsync(WorkflowInstance wfi, CancellationToken stoppingToken)
         {
             using var scope = _serviceProvider.CreateScope();
-                        var context = new StepExecutionContext()
+            var context = new StepExecutionContext()
+            {
+                StoppingToken = stoppingToken,
+                ServiceProvider =  _serviceProvider,
+                Logger = _logger,
+                ContextData = wfi.Data
+            };
+            var executionResult = new ExecutionResult();
+            var sw = new Stopwatch();
+            try
+            {
+                _options?.Start?.Invoke(scope.ServiceProvider, wfi);
+                var steps = scope.ServiceProvider.GetServices<IStepBodyAsync>().ToList();
+                _logger.LogInformation($"{wfi.Id} Begin");
+                sw.Start();
+                if (!steps.Any())
+                {
+                    throw new WorkflowStepNotRegisteredException(wfi.WorkflowId, wfi.Version);
+                }
+                foreach (var workFlowStep in wfi.Steps)
+                {
+                    var retryCnt = 0;
+                    context.CurrentStep = workFlowStep;
+                    var stepBody = steps.FirstOrDefault(m => m.GetType() == workFlowStep.StepType);
+                    if (stepBody == null)
+                    {
+                        throw new NullReferenceException(workFlowStep?.StepType?.FullName);
+                    }
+                    _logger.LogInformation($"{workFlowStep.Id}, Begin");
+                    var inComeData = context.ContextData;
+                    // retry step when fail
+                    while (retryCnt++ <= Math.Abs(context.CurrentStep.FailedRetryCount))
+                    {
+                        executionResult = await stepBody.RunAsync(context, stoppingToken);
+                        if (executionResult.Proceed)
                         {
-                            StoppingToken = stoppingToken,
-                            ServiceProvider =  _serviceProvider,
-                            Logger = _logger,
-                            ContextData = wfi.Data
-                        };
-                        var executionResult = new ExecutionResult();
-                        var sw = new Stopwatch();
-                        try
-                        {
-                            _options?.Start?.Invoke(scope.ServiceProvider, wfi);
-                            var steps = scope.ServiceProvider.GetServices<IStepBodyAsync>().ToList();
-                            _logger.LogInformation($"{wfi.Id} Begin");
-                            sw.Start();
-                            if (!steps.Any())
-                            {
-                                throw new WorkflowStepNotRegisteredException(wfi.WorkflowId, wfi.Version);
-                            }
-                            foreach (var workFlowStep in wfi.Steps)
-                            {
-                                var retryCnt = 0;
-                                context.CurrentStep = workFlowStep;
-                                var stepBody = steps.FirstOrDefault(m => m.GetType() == workFlowStep.StepType);
-                                if (stepBody == null)
-                                {
-                                    throw new NullReferenceException(workFlowStep?.StepType?.FullName);
-                                }
-                                _logger.LogInformation($"{workFlowStep.Id}, Begin");
-                                var inComeData = context.ContextData;
-                                // retry step when fail
-                                while (retryCnt++ <= Math.Abs(context.CurrentStep.FailedRetryCount))
-                                {
-                                    executionResult = await stepBody.RunAsync(context, stoppingToken);
-                                    if (executionResult.Proceed)
-                                    {
-                                        break;
-                                    }
-                                }
-
-                                var outComeData = context.ContextData;
-                                // persistent current step data & status
-                                await _persistenceProvider.PersistWorkflowStepAsync(wfi.Id, wfi.WorkflowId, workFlowStep, inComeData, outComeData, executionResult, stoppingToken);
-                                if (!executionResult.Proceed)
-                                {
-                                    _logger.LogError(
-                                        $"{workFlowStep.Id}, retryCount: {retryCnt - 1}, error：{executionResult.InnerException.Message}");
-                                    break;
-                                }
-
-                                _logger.LogInformation($"{workFlowStep.Id}, End");
-                                _logger.LogInformation(
-                                    $"{workFlowStep.Id}, {executionResult.ConsumeElapsedMilliseconds} ms");
-                            }
-
-                            sw.Stop();
-                            if (!executionResult.Proceed)
-                            {
-                                _logger.LogError($"{wfi.Id}, End With Exception: {executionResult.InnerException}");
-                            }
-                            _logger.LogInformation($"{wfi.Id}, End and Execute: {sw.ElapsedMilliseconds} ms");
+                            break;
                         }
-                        catch (System.Exception e)
-                        {
-                            _logger.LogError(e.Message, e);
-                            executionResult.Proceed = false;
-                            executionResult.InnerException = e;
-                        }
-                        finally
-                        {
-                            await _persistenceProvider.PersistWorkflowInstanceAsync(wfi, context, executionResult, sw.ElapsedMilliseconds, stoppingToken);
-                            _options?.End?.Invoke(scope.ServiceProvider, wfi, context, executionResult);
-                        }
+                    }
+
+                    var outComeData = context.ContextData;
+                    // persistent current step data & status
+                    await _persistenceProvider.PersistWorkflowStepAsync(wfi.Id, wfi.WorkflowId, workFlowStep, inComeData, outComeData, executionResult, stoppingToken);
+                    if (!executionResult.Proceed)
+                    {
+                        _logger.LogError(
+                            $"{workFlowStep.Id}, retryCount: {retryCnt - 1}, error：{executionResult.InnerException.Message}");
+                        break;
+                    }
+
+                    _logger.LogInformation($"{workFlowStep.Id}, End");
+                    _logger.LogInformation(
+                        $"{workFlowStep.Id}, {executionResult.ConsumeElapsedMilliseconds} ms");
+                }
+
+                sw.Stop();
+                if (!executionResult.Proceed)
+                {
+                    _logger.LogError($"{wfi.Id}, End With Exception: {executionResult.InnerException}");
+                }
+                _logger.LogInformation($"{wfi.Id}, End and Execute: {sw.ElapsedMilliseconds} ms");
+            }
+            catch (System.Exception e)
+            {
+                _logger.LogError(e.Message, e);
+                executionResult.Proceed = false;
+                executionResult.InnerException = e;
+            }
+            finally
+            {
+                await _persistenceProvider.PersistWorkflowInstanceAsync(wfi, context, executionResult, sw.ElapsedMilliseconds, stoppingToken);
+                _options?.End?.Invoke(scope.ServiceProvider, wfi, context, executionResult);
+            }
         }
         
         public Task StopAsync(CancellationToken stoppingToken)

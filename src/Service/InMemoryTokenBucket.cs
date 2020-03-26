@@ -26,18 +26,17 @@ namespace MeiYiJia.Abp.Workflow.Service
         private int AutoFillInInterval { get; set; } = 10;
         private readonly AsyncLock _mutex = new AsyncLock();
         private readonly ILogger _logger;
-        private readonly object _locker = new object();
 
         public InMemoryTokenBucket(IOptions<WorkflowOptions> options, ILogger<InMemoryTokenBucket> logger)
         {
             _logger = logger;
             _currentSize = _maxSize = (options.Value ?? new WorkflowOptions()).MaxWaitingQueueCount;
         }
-        public async Task<bool> TryGetToken()
+        public async Task<bool> TryGetToken(CancellationToken stoppingToken)
         {
             using (await _mutex.LockAsync())
             {
-                if (_currentSize <= _maxSize)
+                if (_currentSize > 0 && _currentSize <= _maxSize)
                 {
                     Interlocked.Decrement(ref _currentSize);
                     return true;
@@ -64,7 +63,7 @@ namespace MeiYiJia.Abp.Workflow.Service
         {
             using (await _mutex.LockAsync())
             {
-                if (_currentSize > 0 && _currentSize < _maxSize)
+                if (_currentSize < _maxSize)
                 {
                     Interlocked.Increment(ref _currentSize);
                 }
