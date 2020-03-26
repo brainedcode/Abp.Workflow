@@ -37,8 +37,8 @@
           <e p="IStepExecutionContext.cs" t="Include" />
           <e p="ITokenBucket.cs" t="Include" />
           <e p="IWorkflowController.cs" t="Include" />
+          <e p="IWorkflowHost.cs" t="Include" />
           <e p="IWorkflowRegistry.cs" t="Include" />
-          <e p="IWorkHost.cs" t="Include" />
         </e>
         <e p="MeiYiJia.Abp.Workflow.csproj" t="IncludeRecursive" />
         <e p="Model" t="Include">
@@ -68,9 +68,7 @@
         <e p="Step" t="Include">
           <e p="BaseStepBodyAsync.cs" t="Include" />
         </e>
-        <e p="Worker" t="Include">
-          <e p="WorkFlowHost.cs" t="Include" />
-        </e>
+        <e p="WorkFlowHost.cs" t="Include" />
         <e p="WorkflowModule.cs" t="Include" />
         <e p="WorkflowOptions.cs" t="Include" />
       </e>

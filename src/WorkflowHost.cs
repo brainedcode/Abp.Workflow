@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -7,14 +9,13 @@ using MeiYiJia.Abp.Workflow.Exception;
 using MeiYiJia.Abp.Workflow.Interface;
 using MeiYiJia.Abp.Workflow.Model;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nito.AsyncEx;
 
-namespace MeiYiJia.Abp.Workflow.Worker
+namespace MeiYiJia.Abp.Workflow
 {
-    public class WorkFlowHost: IWorkHost
+    public class WorkflowHost: IWorkflowHost
     {
         private readonly IWorkflowController _workflowController;
         private readonly ILogger _logger;
@@ -22,10 +23,10 @@ namespace MeiYiJia.Abp.Workflow.Worker
         private readonly IPersistenceProvider _persistenceProvider;
         private readonly WorkflowOptions _options;
         
-        public WorkFlowHost(
+        public WorkflowHost(
             IWorkflowController workflowController, 
             IPersistenceProvider persistenceProvider,
-            ILogger<WorkFlowHost> logger, 
+            ILogger<WorkflowHost> logger, 
             IServiceProvider serviceProvider,
             IOptions<WorkflowOptions> options)
         {
@@ -39,19 +40,43 @@ namespace MeiYiJia.Abp.Workflow.Worker
         public async Task StartAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation($"{GetType().Name} is running !");
+            var activeTasks = new ConcurrentDictionary<string, Task>();
             while (!stoppingToken.IsCancellationRequested)
             {
-                await Task.Delay(2000, stoppingToken);
                 var wfiRunnable = await _persistenceProvider.GetRunnableInstanceAsync(stoppingToken);
                 if (wfiRunnable != null)
                 {
                     await _workflowController.ResumeWorkflow(wfiRunnable);
                 }
+                
                 if (_workflowController.TryGetWorkflowInstance(out var wfi))
                 {
-                    AsyncContext.Run(async () =>
-                    {
-                        using var scope = _serviceProvider.CreateScope();
+                    var task = new Task(async (dynamic state) =>
+                        {
+                            await ExecuteAsync(state.wfi, state.stoppingToken);
+                        }, 
+                        new
+                        {
+                            wfi, 
+                            stoppingToken
+                        }, 
+                        TaskCreationOptions.LongRunning);
+                    activeTasks.TryAdd(wfi.Id, task);
+                    task.Start();
+                }
+                else
+                {
+                    await Task.Delay(2000, stoppingToken);
+                    Console.WriteLine(activeTasks.Count);
+                }
+            }
+            await Task.WhenAll(activeTasks.Values);
+            _logger.LogInformation($"{nameof(GetType)} is stop !");
+        }
+
+        private async Task ExecuteAsync(WorkflowInstance wfi, CancellationToken stoppingToken)
+        {
+            using var scope = _serviceProvider.CreateScope();
                         var context = new StepExecutionContext()
                         {
                             StoppingToken = stoppingToken,
@@ -125,12 +150,8 @@ namespace MeiYiJia.Abp.Workflow.Worker
                             await _persistenceProvider.PersistWorkflowInstanceAsync(wfi, context, executionResult, sw.ElapsedMilliseconds, stoppingToken);
                             _options?.End?.Invoke(scope.ServiceProvider, wfi, context, executionResult);
                         }
-                    });
-                }
-            }
-            _logger.LogInformation($"{nameof(GetType)} is stop !");
         }
-
+        
         public Task StopAsync(CancellationToken stoppingToken)
         {
             return Task.CompletedTask;
