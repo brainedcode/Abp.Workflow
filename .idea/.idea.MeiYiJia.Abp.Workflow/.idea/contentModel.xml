@@ -65,6 +65,7 @@
           <e p="WorkflowController.cs" t="Include" />
           <e p="WorkflowExecutor.cs" t="Include" />
         </e>
+        <e p="ServiceExtensions.cs" t="Include" />
         <e p="Step" t="Include">
           <e p="BaseStepBodyAsync.cs" t="Include" />
         </e>

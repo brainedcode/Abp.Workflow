@@ -1,3 +1,4 @@
+using System.Threading;
 using System.Threading.Tasks;
 using MeiYiJia.Abp.Workflow.Interface;
 using Microsoft.Extensions.Logging;
@@ -13,12 +14,12 @@ namespace MeiYiJia.Abp.Workflow.Service
         /// <summary>
         /// 令牌桶大小上限
         /// </summary>
-        private int MaxSize { get; set; } = 10;
+        private readonly int _maxSize;
 
         /// <summary>
         /// 当前大小
         /// </summary>
-        private int CurrentSize { get; set; } = 10;
+        private int _currentSize;
         /// <summary>
         /// 间隔多少秒自动填充
         /// </summary>
@@ -30,15 +31,15 @@ namespace MeiYiJia.Abp.Workflow.Service
         public InMemoryTokenBucket(IOptions<WorkflowOptions> options, ILogger<InMemoryTokenBucket> logger)
         {
             _logger = logger;
-            CurrentSize = MaxSize = (options.Value ?? new WorkflowOptions()).MaxWaitingQueueCount;
+            _currentSize = _maxSize = (options.Value ?? new WorkflowOptions()).MaxWaitingQueueCount;
         }
         public async Task<bool> TryGetToken()
         {
             using (await _mutex.LockAsync())
             {
-                if (CurrentSize <= MaxSize)
+                if (_currentSize <= _maxSize)
                 {
-                    CurrentSize--;
+                    Interlocked.Decrement(ref _currentSize);
                     return true;
                 }
                 else
@@ -52,9 +53,9 @@ namespace MeiYiJia.Abp.Workflow.Service
         {
             using (await _mutex.LockAsync())
             {
-                if (CurrentSize > 0)
+                if (_currentSize > 0)
                 {
-                    CurrentSize--;
+                    Interlocked.Decrement(ref _currentSize);
                 }
             }
         }
@@ -63,9 +64,9 @@ namespace MeiYiJia.Abp.Workflow.Service
         {
             using (await _mutex.LockAsync())
             {
-                if (CurrentSize > 0 && CurrentSize < MaxSize)
+                if (_currentSize > 0 && _currentSize < _maxSize)
                 {
-                    CurrentSize++;
+                    Interlocked.Increment(ref _currentSize);
                 }
             }
         }
