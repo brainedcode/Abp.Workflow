@@ -15,11 +15,7 @@ namespace MeiYiJia.Abp.Workflow
             this IServiceCollection services,
             IConfiguration configuration)
         {
-            Assembly entryAssembly = Assembly.GetEntryAssembly();
-
-            var types = Assembly.GetEntryAssembly()?.GetTypes()
-                .Where(m => m.IsAssignableFrom(typeof(IStepBodyAsync)) && !m.IsAbstract && m.IsClass)
-                .ToList() ?? new List<Type>();
+            var types = Assembly.GetEntryAssembly()?.GetTypes().Where(m=>m.IsAssignableTo<IStepBodyAsync>() && !m.IsAbstract).ToList() ?? new List<Type>();
 
             foreach (Type implementationType in types)
             {
